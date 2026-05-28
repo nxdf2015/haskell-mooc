@@ -28,7 +28,11 @@ import Data.List
 --  maxBy head   [1,2,3] [4,5]  ==>  [4,5]
 
 maxBy :: (a -> Int) -> a -> a -> a
-maxBy measure a b = todo
+maxBy measure a b = 
+    let ma = measure a 
+        mb = measure b
+    in
+        if ma > mb  then a else b 
 
 ------------------------------------------------------------------------------
 -- Ex 2: implement the function mapMaybe that takes a function and a
@@ -40,7 +44,8 @@ maxBy measure a b = todo
 --   mapMaybe length (Just "abc") ==> Just 3
 
 mapMaybe :: (a -> b) -> Maybe a -> Maybe b
-mapMaybe f x = todo
+mapMaybe _ Nothing = Nothing
+mapMaybe f (Just v) = Just (f v)
 
 ------------------------------------------------------------------------------
 -- Ex 3: implement the function mapMaybe2 that works like mapMaybe
@@ -54,7 +59,8 @@ mapMaybe f x = todo
 --   mapMaybe2 div (Just 6) Nothing   ==>  Nothing
 
 mapMaybe2 :: (a -> b -> c) -> Maybe a -> Maybe b -> Maybe c
-mapMaybe2 f x y = todo
+mapMaybe2 f (Just x)  (Just y) = Just (f x y)
+mapMaybe2 _ _ _ = Nothing
 
 ------------------------------------------------------------------------------
 -- Ex 4: define the functions firstHalf and palindrome so that
@@ -76,9 +82,13 @@ mapMaybe2 f x y = todo
 palindromeHalfs :: [String] -> [String]
 palindromeHalfs xs = map firstHalf (filter palindrome xs)
 
-firstHalf = todo
+firstHalf xs 
+    | (length xs) <= 1 = xs
+    | even (length xs) = take (div (length xs) 2) xs
+    | otherwise = take (div ((length xs) +  1)2) xs
 
-palindrome = todo
+
+palindrome xs = xs == (reverse xs)
 
 ------------------------------------------------------------------------------
 -- Ex 5: Implement a function capitalize that takes in a string and
@@ -96,7 +106,10 @@ palindrome = todo
 --   capitalize "goodbye cruel world" ==> "Goodbye Cruel World"
 
 capitalize :: String -> String
-capitalize = todo
+capitalize xs = 
+    unwords $ map (\ (h:hs) -> (toUpper h)  : hs ) (words xs)
+   
+       
 
 ------------------------------------------------------------------------------
 -- Ex 6: powers k max should return all the powers of k that are less
@@ -113,7 +126,13 @@ capitalize = todo
 --   * the function takeWhile
 
 powers :: Int -> Int -> [Int]
-powers k max = todo
+powers k max = 
+    let 
+        helper u = 
+             u :  helper (u *  k) 
+    in 
+        takeWhile (\ v -> v <=  max) (helper 1)
+    
 
 ------------------------------------------------------------------------------
 -- Ex 7: implement a functional while loop. While should be a function
@@ -136,7 +155,11 @@ powers k max = todo
 --     ==> Avvt
 
 while :: (a->Bool) -> (a->a) -> a -> a
-while check update value = todo
+while check update value =
+        case check value of
+            True -> while check update (update value)
+            False -> value
+
 
 ------------------------------------------------------------------------------
 -- Ex 8: another version of a while loop. This time, the check
@@ -156,7 +179,10 @@ while check update value = todo
 -- Hint! Remember the case-of expression from lecture 2.
 
 whileRight :: (a -> Either b a) -> a -> b
-whileRight check x = todo
+whileRight check v =
+    case (check v) of
+        Left u -> u
+        Right u -> whileRight check u
 
 -- for the whileRight examples:
 -- step k x doubles x if it's less than k
@@ -180,7 +206,7 @@ bomb x = Right (x-1)
 -- Hint! This is a great use for list comprehensions
 
 joinToLength :: Int -> [String] -> [String]
-joinToLength = todo
+joinToLength l xs   = [ (v ++ w) | v <- xs , w <- xs , length(v++w) == l]
 
 ------------------------------------------------------------------------------
 -- Ex 10: implement the operator +|+ that returns a list with the first
@@ -193,7 +219,10 @@ joinToLength = todo
 --   [1,2,3] +|+ [4,5,6]  ==> [1,4]
 --   [] +|+ [True]        ==> [True]
 --   [] +|+ []            ==> []
-
+(+|+) [] [] = []
+(+|+) [] (x:xs) = x :[]
+(+|+) (x:xs) [] = x : [] 
+(+|+) (x:xs) (y:ys) = [x,y]
 
 ------------------------------------------------------------------------------
 -- Ex 11: remember the lectureParticipants example from Lecture 2? We
@@ -210,7 +239,12 @@ joinToLength = todo
 --   sumRights [Left "bad!", Left "missing"]         ==>  0
 
 sumRights :: [Either a Int] -> Int
-sumRights = todo
+sumRights xs = 
+    let 
+        helper (Right v) = v
+        helper (Left _) = 0
+    in
+        sum $ map helper xs 
 
 ------------------------------------------------------------------------------
 -- Ex 12: recall the binary function composition operation
@@ -226,7 +260,7 @@ sumRights = todo
 --   multiCompose [(3*), (2^), (+1)] 0 ==> 6
 --   multiCompose [(+1), (2^), (3*)] 0 ==> 2
 
-multiCompose fs = todo
+multiCompose ls x = foldr (\ f acc  -> f acc  ) x ls 
 
 ------------------------------------------------------------------------------
 -- Ex 13: let's consider another way to compose multiple functions. Given
@@ -247,7 +281,7 @@ multiCompose fs = todo
 --   multiApp id [head, (!!2), last] "axbxc" ==> ['a','b','c'] i.e. "abc"
 --   multiApp sum [head, (!!2), last] [1,9,2,9,3] ==> 6
 
-multiApp = todo
+multiApp f gs x = f $ map ( $ x) gs
 
 ------------------------------------------------------------------------------
 -- Ex 14: in this exercise you get to implement an interpreter for a
@@ -273,7 +307,7 @@ multiApp = todo
 -- interpreter ["up","right","right","printY","printX"] ==> ["1","2"]
 --
 -- Surprise! after you've implemented the function, try running this in GHCi:
---     interact (unlines . interpreter . lines)
+--    stack
 -- after this you can enter commands on separate lines and see the
 -- responses to them
 --
@@ -282,4 +316,20 @@ multiApp = todo
 -- function, the surprise won't work. See section 3.8 in the material.
 
 interpreter :: [String] -> [String]
-interpreter commands = todo
+interpreter ls =   helper    start   ls 
+
+start:: (Int, Int) = (0,0)        
+helper (x,y) [] = []
+helper (x,y) (m:ms) = 
+    case m of
+        "printX" -> show(x): (helper (x,y) ms)
+        "printY" -> show(y) : (helper (x,y) ms)
+        _ ->  helper (mouvement m (x,y)) ms 
+
+mouvement "right" (x, y) = (x + 1, y) 
+mouvement "left" (x,y) =(x - 1 , y)
+mouvement "up" (x,y) =  (x  , y + 1)
+mouvement "down" (x,y) = (x , y - 1)
+
+
+
