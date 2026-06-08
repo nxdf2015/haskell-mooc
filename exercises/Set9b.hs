@@ -47,10 +47,10 @@ type Col   = Int
 type Coord = (Row, Col)
 
 nextRow :: Coord -> Coord
-nextRow (i,j) = todo
+nextRow (i,j) = (i +  1   ,1)
 
 nextCol :: Coord -> Coord
-nextCol (i,j) = todo
+nextCol (i,j) = (i  , j + 1 )
 
 --------------------------------------------------------------------------------
 -- Ex 2: Implement the function prettyPrint that, given the size of
@@ -97,17 +97,25 @@ nextCol (i,j) = todo
 -- coordinates one at a time. (For those who've had a course in data structures
 -- and algorithms, this challenge is about finding an O(n^2) solution in terms
 -- of the width (or height) n of the chess board; the naïve solution with elem
--- takes O(n^3) time. Just ignore the previous sentence, if you're not familiar
+-- takes O(n^3) time. Just ignore the previous sentence, if you're  familiar
 -- with the O-notation.)
 
 type Size = Int
 
 prettyPrint :: Size -> [Coord] -> String
-prettyPrint = todo
+prettyPrint size  positions = helperPrint  1 1 
+            where
+                testPoint x y   =  any   (\ (a,b) -> a == x && b == y) positions
+                helperPrint x y  
+                    |  x == size && y == (size + 1) = "\n"
+                    | mod y (size + 1) == 0  = "\n" ++ (helperPrint (x + 1) 1  )
+                    | (testPoint x y )   = "Q" ++  (helperPrint x  (y + 1 ))
+                    | not (testPoint x y) = "." ++ (helperPrint  x (y + 1)) 
+
 
 --------------------------------------------------------------------------------
 -- Ex 3: The task in this exercise is to define the relations sameRow, sameCol,
--- sameDiag, and sameAntidiag that check whether or not two coordinates of the
+-- sameDiag, and sameAntidiag that check whether or  two coordinates of the
 -- form (i,j) :: (Row, Col) on a table of indeterminate size are on the same
 -- column, diagonal (top left to bottom right), or antidiagonal (bottom left to
 -- top right) respectively. Indeterminate size of the table means that these
@@ -127,16 +135,16 @@ prettyPrint = todo
 --   sameAntidiag (500,5) (5,500) ==> True
 
 sameRow :: Coord -> Coord -> Bool
-sameRow (i,j) (k,l) = todo
+sameRow (i,j) (k,l) = i == k 
 
 sameCol :: Coord -> Coord -> Bool
-sameCol (i,j) (k,l) = todo
+sameCol (i,j) (k,l) =  j == l
 
 sameDiag :: Coord -> Coord -> Bool
-sameDiag (i,j) (k,l) = todo
+sameDiag (i,j) (k,l) = (i == j && j== l) ||  (i - j ==  k - l )
 
 sameAntidiag :: Coord -> Coord -> Bool
-sameAntidiag (i,j) (k,l) = todo
+sameAntidiag (i,j) (k,l) = (i == j && j== l) || ( i + j == k + l)
 
 --------------------------------------------------------------------------------
 -- Ex 4: In chess, a queen may capture another piece in the same row, column,
@@ -191,7 +199,11 @@ type Candidate = Coord
 type Stack     = [Coord]
 
 danger :: Candidate -> Stack -> Bool
-danger = todo
+danger candidate stack = testCandidate candidate 
+            where
+                helperPoint  test = any  (test candidate )  stack 
+                testCandidate candidate =  any (== True) (map helperPoint [sameCol , sameRow , sameDiag , sameAntidiag] )
+                
 
 --------------------------------------------------------------------------------
 -- Ex 5: In this exercise, the task is to write a modified version of
@@ -225,8 +237,17 @@ danger = todo
 -- (For those that did the challenge in exercise 2, there's probably no O(n^2)
 -- solution to this version. Any working solution is okay in this exercise.)
 
-prettyPrint2 :: Size -> Stack -> String
-prettyPrint2 = todo
+prettyPrint2 :: Size -> [Coord] -> String
+prettyPrint2 size  positions = helper  1 1 
+            where
+                testPoint (x,y)   =  (any   (\ (a,b) -> a == x && b == y) positions) 
+                 
+                helper x y  
+                    |  x == size && y == (size + 1) = "\n"
+                    | mod y (size + 1) == 0  = "\n" ++ (helper (x + 1) 1  )
+                    | (testPoint (x ,y ))   = "Q" ++  (helper x  (y + 1 ))
+                    | (danger (x,y) positions ) = "#" ++ (helper x  (y + 1 ))
+                    |  not (testPoint (x ,y)) = "." ++ (helper  x (y + 1)) 
 
 --------------------------------------------------------------------------------
 -- Ex 6: Now that we can check if a piece can be safely placed into a square in
@@ -235,7 +256,7 @@ prettyPrint2 = todo
 -- Given the size of the chessboard and a stack, the function fixFirst
 -- should take the queen on the top of the stack, and if it is in
 -- danger, move it right _along the same row_ (in the direction of
--- increasing columns) until it is not in danger.
+-- increasing columns) until it is  in danger.
 --
 -- If no safe spot is found for the queen on that row, fixFirst should
 -- return Nothing.
@@ -270,8 +291,20 @@ prettyPrint2 = todo
 --     ####Q###
 --     Q#######
 
+isColOutside  size (_,c) = c > size
+
+
 fixFirst :: Size -> Stack -> Maybe Stack
-fixFirst n s = todo
+
+fixFirst n (first:stack)  = helper    first stack 
+    where
+        helper p s
+            | (isColOutside n p) = Nothing
+            | danger p s  = helper  (nextCol p)  s
+            | not  (danger p s) = Just ( p:s)
+                
+
+
 
 --------------------------------------------------------------------------------
 -- Ex 7: We need two helper functions for stack management.
@@ -293,10 +326,10 @@ fixFirst n s = todo
 -- Hint: Remember nextRow and nextCol? Use them!
 
 continue :: Stack -> Stack
-continue s = todo
+continue ((x,y) : s) = (x+1,1) : (x,y) :s
 
 backtrack :: Stack -> Stack
-backtrack s = todo
+backtrack (_ : (x,y) : s )= (x ,y+ 1) : s
 
 --------------------------------------------------------------------------------
 -- Ex 8: Let's take a step. Our algorithm solves the problem (in a
@@ -322,7 +355,7 @@ backtrack s = todo
 -- stack, and tries to fix the position of the queen on the top of the
 -- stack (using fixFirst). If a new position is found, the function
 -- should call continue to return a stack with a new candidate. If a
--- safe position is not found, the function should call backtrack to
+-- safe position is  found, the function should call backtrack to
 -- return a new stack.
 --
 -- Examples:
@@ -365,7 +398,10 @@ backtrack s = todo
 --     step 8 [(6,1),(5,4),(4,2),(3,5),(2,3),(1,1)] ==> [(5,5),(4,2),(3,5),(2,3),(1,1)]
 
 step :: Size -> Stack -> Stack
-step = todo
+step  size stack =   case (fixFirst size stack) of
+                            Nothing ->   backtrack stack
+                            Just s -> continue s
+
 
 --------------------------------------------------------------------------------
 -- Ex 9: Let's solve our puzzle! The function finish takes a partial
@@ -380,7 +416,12 @@ step = todo
 -- solve the n queens problem.
 
 finish :: Size -> Stack -> Stack
-finish = todo
+
+finish size stack  
+        | ((length stack) == (size + 1)) =  tail stack 
+        | otherwise  = finish size (step size stack)
+
+ 
 
 solve :: Size -> Stack
 solve n = finish n [(1,1)]
