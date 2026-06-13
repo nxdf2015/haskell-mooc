@@ -128,15 +128,10 @@ lengthAtLeast n xs = length (take n xs) == n
 
 chunks :: Int -> [a] -> [[a]]
 chunks _ [] = [] 
-chunks n xs = let 
-                v =  (take n xs) 
-                
-              in 
-                if length v == n 
-                    then 
-                        v: chunks n (drop 1 xs)
-                    else 
-                        [] 
+chunks n xs
+    | lengthAtLeast n xs =  (take n xs) : chunks n (tail xs)
+    | otherwise  = [] 
+     
 
 
 
